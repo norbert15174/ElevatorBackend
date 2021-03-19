@@ -5,6 +5,7 @@ import lombok.*;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 @Entity
 @Setter
@@ -21,7 +22,7 @@ public class Building {
     @NotNull
     private String buildingName;
     @OneToMany(fetch = FetchType.EAGER,cascade = CascadeType.ALL)
-    private List<Elevator> elevators;
+    private List<Elevator> elevators = new ArrayList<>();
     private LocalDateTime lastUsed;
 
 

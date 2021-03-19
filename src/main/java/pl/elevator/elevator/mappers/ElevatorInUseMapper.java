@@ -13,7 +13,6 @@
 //import java.util.List;
 //
 //
-//@Component
 //@NoArgsConstructor
 //public class ElevatorInUseMapper {
 //

@@ -6,10 +6,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import javax.persistence.*;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Entity
 @Setter
@@ -25,7 +22,7 @@ public class User implements UserDetails {
     private String password;
     private Role role = Role.ROLE_ADMIN;
     @OneToMany(cascade = CascadeType.ALL)
-    private List<Building> buildings;
+    private List<Building> buildings = new ArrayList<>();
 
     public boolean addBuilding(Building building){
        if(buildings.stream().filter(b -> b.getBuildingName() == building.getBuildingName()).findFirst().isPresent()) return false ;

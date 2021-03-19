@@ -16,6 +16,8 @@ public interface UserRepository extends JpaRepository<User,Long> {
     Optional<List<User>> getAllUserBuildings();
     @Query("select u from User u left join fetch u.buildings b left join b.elevators where u.username = :name")
     Optional<User> getUserBuildings(@Param("name") String name);
+    User findAllByUsername(String username);
 
-
+    @Query("select u from User u where u.username = :username")
+    Optional<User> findFirstByUsername(String username);
 }

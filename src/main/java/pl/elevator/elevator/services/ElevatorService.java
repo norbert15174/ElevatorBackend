@@ -19,6 +19,7 @@ import pl.elevator.elevator.repositories.BuildingRepository;
 import pl.elevator.elevator.repositories.ElevatorRepository;
 import pl.elevator.elevator.repositories.UserRepository;
 
+import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -30,9 +31,11 @@ public class ElevatorService {
     private UserRepository userRepository;
     private BuildingRepository buildingRepository;
     private ElevatorRepository elevatorRepository;
+    private UserService userService;
 
     @Autowired
-    public ElevatorService(UserRepository userRepository, BuildingRepository buildingRepository,ElevatorRepository elevatorRepository) {
+    public ElevatorService(UserRepository userRepository, BuildingRepository buildingRepository,ElevatorRepository elevatorRepository , UserService userService) {
+        this.userService = userService;
             this.userRepository = userRepository;
             this.buildingRepository = buildingRepository;
             this.elevatorRepository = elevatorRepository;
@@ -52,7 +55,7 @@ public class ElevatorService {
         try {
             int id = buildingElevator.get(username).indexOf(buildingElevator.get(username).stream().filter(building -> building.getId() == buildingId).findFirst().get());
             return id;
-        }catch (NullPointerException e){
+        }catch (NullPointerException | NoSuchElementException e){
             System.err.println("Building doesn't exist");
             return -1;
         }
@@ -99,8 +102,14 @@ public class ElevatorService {
         return new ResponseEntity<>(building,HttpStatus.OK);
     }
 
+    public ResponseEntity<Map<String, List<BuildingElevator>>> getAllBuildingElevator(){
+        return new ResponseEntity(buildingElevator, HttpStatus.OK);
+    }
+
+
     @Transactional
-    public ResponseEntity<Building> addNewBuilding(Building building, UserDetails userDetails){
+    public ResponseEntity<Building> addNewBuilding(Building building, Principal principal){
+        UserDetails userDetails = userService.loadUserByUsername(principal.getName());
         if(buildingRepository.findBuildingByName(building.getBuildingName()).isPresent()) return new ResponseEntity<>(HttpStatus.CONFLICT);
         building.setLastUsed(LocalDateTime.now());
         Optional<User> user = userRepository.getUserBuildings(userDetails.getUsername());
@@ -108,19 +117,29 @@ public class ElevatorService {
             User getUser = user.get();
             if(getUser.addBuilding(building)){
                 userRepository.save(getUser);
-                buildingElevator.get(userDetails.getUsername()).add(new BuildingElevator(buildingRepository.findBuildingByName(building.getBuildingName()).get()));
-                return new ResponseEntity<>(building,HttpStatus.OK);
+                try {
+                    buildingElevator.get(userDetails.getUsername()).add(new BuildingElevator(buildingRepository.findBuildingByName(building.getBuildingName()).get()));
+                    return new ResponseEntity<>(building,HttpStatus.OK);
+                }catch (NullPointerException e){
+                    buildingElevator.put(userDetails.getUsername(),new ArrayList<>());
+                    buildingElevator.get(userDetails.getUsername()).add(new BuildingElevator(buildingRepository.findBuildingByName(building.getBuildingName()).get()));
+                    return new ResponseEntity<>(HttpStatus.OK);
+                }
+
             }
             return new ResponseEntity<>(HttpStatus.NOT_MODIFIED);
         }
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
     @Transactional
-    public ResponseEntity deleteBuilding(long id, UserDetails userDetails){
+    public ResponseEntity deleteBuilding(long id, Principal principal){
+        UserDetails userDetails = userService.loadUserByUsername(principal.getName());
         Optional<User> user = userRepository.getUserBuildings(userDetails.getUsername());
         if(user.isPresent()){
             User getUser = user.get();
             if(getUser.getBuildings().stream().filter(b -> b.getId() == id).findFirst().isPresent()){
+
+                getUser.deleteBuilding(buildingRepository.findBuildingById(id).get().getBuildingName());
                 buildingRepository.deleteById(id);
                 int buildingId = getBuildingId(userDetails.getUsername(),id);
                 buildingElevator.get(userDetails.getUsername()).remove(buildingId);
@@ -131,7 +150,9 @@ public class ElevatorService {
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
     @Transactional
-    public ResponseEntity deleteElevator(String username, long buildingId, long elevatorId, UserDetails userDetails){
+    public ResponseEntity deleteElevator(String username, long buildingId, long elevatorId, Principal principal){
+        UserDetails userDetails = userService.loadUserByUsername(principal.getName());
+        if(userDetails.getUsername() != username) return new ResponseEntity(HttpStatus.FORBIDDEN);
         int id = getBuildingId(username,buildingId);
         if(id == -1 || buildingElevator.get(username).get(id).getElevatorInUseList().isEmpty()) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         buildingElevator.get(username).get(id).getElevatorInUseList().remove(elevatorId);
@@ -140,7 +161,10 @@ public class ElevatorService {
     }
 
     @Transactional
-    public ResponseEntity addElevator(String username, long buildingId, Elevator elevator, UserDetails userDetails){
+    public ResponseEntity addElevator(String username, long buildingId, Principal principal){
+        Elevator elevator = new Elevator();
+        elevator.setCurrentFlat(0);
+        UserDetails userDetails = userService.loadUserByUsername(principal.getName());
         Optional<Building> building = buildingRepository.findBuildingById(buildingId);
         if(!building.isPresent()) return new ResponseEntity(HttpStatus.NOT_FOUND);
         Building buildingToSave = building.get();
@@ -153,40 +177,8 @@ public class ElevatorService {
         return new ResponseEntity(HttpStatus.OK);
     }
 
-
-
-
-
-    @EventListener(ApplicationReadyEvent.class)
-    public void test(){
-//        User user = new User();
-//        user.setUsername("Norbert1");
-//        user.setPassword("N@jlepszy");
-//       Building building = new Building();
-//        building.setBuildingName("asd");
-//        building.setFloorsNumber(20);
-//        building.setLastUsed(LocalDateTime.now());
-//       Elevator elevator = new Elevator();
-//        List<Elevator> elevators = new ArrayList<>();
-//        elevator.setCurrentFlat(5);
-//        elevators.add(elevator);
-//        Elevator elevator1 = new Elevator();
-//        elevator1.setCurrentFlat(8);
-//        elevators.add(elevator1);
-//       building.setElevators(elevators);
-//        List<Building> buildings = new ArrayList<>();
-//        buildings.add(building);
-//   //     buildings.add(building);
-//
-//        user.setBuildings(buildings);
-//        userRepository.save(user);
-//        System.out.println(buildingElevator.get("Norbert").get(0).getElevatorInUseList().get(2l).addNextFlat(2));
-//        System.out.println(buildingElevator.get("Norbert").get(0).getElevatorInUseList().get(2l).addNextFlat(5));
-//        System.out.println(buildingElevator.get("Norbert").get(0).getElevatorInUseList().get(2l).moveToNextFlat());
-//        System.out.println(buildingElevator.get("Norbert").get(0).getElevatorInUseList().get(2l).moveToNextFlat());
-//        System.out.println(buildingElevator.get("Norbert").get(0).getElevatorInUseList().get(2l).moveToNextFlat());
-//        System.out.println(buildingElevator.get("Norbert").get(0).getElevatorInUseList().get(2l).getCurrentFlat());
- //       System.out.println(buildingElevator.get("Norbert").get(1).getElevatorInUseList().values());
+    public void moveFlatAll(){
+        buildingElevator.forEach((k,v) -> v.forEach(b -> b.getElevatorInUseList().forEach((ke,el) -> el.moveToNextFlat())));
     }
 
 

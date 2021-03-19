@@ -17,6 +17,10 @@ public class ElevatorInUse extends Elevator {
     }
 
     public boolean addNextFlat(int id){
+        if(nextFlats.stream().filter(flat -> flat == id).findFirst().isPresent()){
+            if(direction == Direction.NOT_SPECIFIED) moveToNextFlat();
+            return false;
+        }
         nextFlats.add(id);
         if(direction == Direction.NOT_SPECIFIED) moveToNextFlat();
         return true;

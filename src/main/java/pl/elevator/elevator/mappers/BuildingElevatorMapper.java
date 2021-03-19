@@ -14,7 +14,6 @@
 //
 //
 //
-//@Component
 //@NoArgsConstructor
 //public class BuildingElevatorMapper {
 //
