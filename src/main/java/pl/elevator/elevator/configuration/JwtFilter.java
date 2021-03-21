@@ -52,7 +52,6 @@ public class JwtFilter extends OncePerRequestFilter {
             if (userDetails == null) return null;
             return new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
         } catch (Exception e) {
-            System.err.println("message : " + e.getMessage());
             return null;
         }
 

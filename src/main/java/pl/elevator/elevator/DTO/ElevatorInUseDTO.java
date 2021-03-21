@@ -14,8 +14,8 @@
 //public class ElevatorInUseDTO {
 //
 //    private long id;
-//    private int currentFlat;
-//    private List<Integer> flatsQueue;
+//    private int currentFloor;
+//    private List<Integer> floorQueue;
 //
 //
 //}

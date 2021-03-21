@@ -1,5 +1,6 @@
 package pl.elevator.elevator.configuration;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -14,7 +15,7 @@ import pl.elevator.elevator.services.ElevatorService;
 public class Scheduler {
 
         private ElevatorService elevatorService;
-
+    @Autowired
     public Scheduler(ElevatorService elevatorService) {
         this.elevatorService = elevatorService;
     }
@@ -25,7 +26,7 @@ public class Scheduler {
 
         @Scheduled(fixedRate = 1000 * 20)
         public void reportCurrentTime() {
-            elevatorService.moveFlatAll();
+            elevatorService.moveAllFloor();
         }
 
 

@@ -1,6 +1,5 @@
 package pl.elevator.elevator.classes;
 
-import lombok.ToString;
 import pl.elevator.elevator.models.Elevator;
 
 import java.util.*;
@@ -10,37 +9,37 @@ import java.util.stream.Collectors;
 public class ElevatorInUse extends Elevator {
 
     private Direction direction = Direction.NOT_SPECIFIED;
-    private List<Integer> nextFlats = new ArrayList<>();
+    private List<Integer> nextFloors = new ArrayList<>();
 
     public ElevatorInUse(Elevator elevator) {
-        super(elevator.getId(),elevator.getCurrentFlat());
+        super(elevator.getId(),elevator.getCurrentFloor());
     }
 
-    public boolean addNextFlat(int id){
-        if(nextFlats.stream().filter(flat -> flat == id).findFirst().isPresent()){
-            if(direction == Direction.NOT_SPECIFIED) moveToNextFlat();
+    public boolean addNextFloor(int id){
+        if(nextFloors.stream().filter(floor -> floor == id).findFirst().isPresent()){
+            if(direction == Direction.NOT_SPECIFIED) moveToNextFloor();
             return false;
         }
-        nextFlats.add(id);
-        if(direction == Direction.NOT_SPECIFIED) moveToNextFlat();
+        nextFloors.add(id);
+        if(direction == Direction.NOT_SPECIFIED) moveToNextFloor();
         return true;
     }
-    public List<Integer> getNextFlats(){
-        if(nextFlats.size() != 0){
-            List<Integer> flatsUp = nextFlats.stream().filter(flat -> flat > currentFlat).sorted().collect(Collectors.toList());
-            List<Integer> flatsDown = nextFlats.stream().filter(flat -> flat < currentFlat).sorted(Comparator.reverseOrder()).collect(Collectors.toList());
+    public List<Integer> getNextFloors(){
+        if(nextFloors.size() != 0){
+            List<Integer> floorsUp = nextFloors.stream().filter(floor -> floor > currentFloor).sorted().collect(Collectors.toList());
+            List<Integer> floorsDown = nextFloors.stream().filter(floor -> floor < currentFloor).sorted(Comparator.reverseOrder()).collect(Collectors.toList());
             List<Integer> flatsInQueue = new ArrayList<>();
             switch (direction){
                 case UP:
-                    flatsUp.forEach(flat -> flatsInQueue.add(flat));
-                    flatsDown.forEach(flat -> flatsInQueue.add(flat));
+                    floorsUp.forEach(floor -> flatsInQueue.add(floor));
+                    floorsDown.forEach(floor -> flatsInQueue.add(floor));
                     return flatsInQueue;
                 case DOWN:
-                    flatsDown.forEach(flat -> flatsInQueue.add(flat));
-                    flatsUp.forEach(flat -> flatsInQueue.add(flat));
+                    floorsDown.forEach(floor -> flatsInQueue.add(floor));
+                    floorsUp.forEach(floor -> flatsInQueue.add(floor));
                     return flatsInQueue;
                 default:
-                    moveToNextFlat();
+                    moveToNextFloor();
                     break;
             }
         }
@@ -51,26 +50,26 @@ public class ElevatorInUse extends Elevator {
     public String toString() {
         return "ElevatorInUse{" +
                 "direction=" + direction +
-                ", nextFlats=" + nextFlats +
+                ", nextFloors=" + nextFloors +
                 ", id=" + id +
-                ", currentFlat=" + currentFlat +
+                ", currentFloor=" + currentFloor +
                 '}';
     }
 
-    public boolean moveToNextFlat(){
-        if(nextFlats.size() == 0){
+    public boolean moveToNextFloor(){
+        if(nextFloors.size() == 0){
             this.direction = Direction.NOT_SPECIFIED;
         }else{
             if(direction == Direction.UP){
-                Integer setDirectionUp = Collections.max(nextFlats);
-                if(setDirectionUp <= currentFlat) this.direction = Direction.DOWN;
+                Integer setDirectionUp = Collections.max(nextFloors);
+                if(setDirectionUp <= currentFloor) this.direction = Direction.DOWN;
             }else if(direction == Direction.DOWN){
-                Integer setDirectionDown = Collections.min(nextFlats);
-                if(setDirectionDown >= currentFlat) this.direction = Direction.UP;
+                Integer setDirectionDown = Collections.min(nextFloors);
+                if(setDirectionDown >= currentFloor) this.direction = Direction.UP;
             }
-            Optional<Integer> deleteFlat = nextFlats.stream().filter(flat -> flat == currentFlat).findFirst();
-            deleteFlat.ifPresent(flat -> nextFlats.remove(flat));
-            if(nextFlats.size() == 0) return true;
+            Optional<Integer> deleteFloor = nextFloors.stream().filter(flat -> flat == currentFloor).findFirst();
+            deleteFloor.ifPresent(floor -> nextFloors.remove(floor));
+            if(nextFloors.size() == 0) return true;
         }
 
         switch (this.direction){
@@ -78,13 +77,13 @@ public class ElevatorInUse extends Elevator {
                 this.direction = Direction.UP;
                 return false;
             case UP:
-                currentFlat++;
+                currentFloor++;
                 break;
             case DOWN:
-                currentFlat--;
+                currentFloor--;
                 break;
         }
-        this.nextFlats = getNextFlats();
+        this.nextFloors = getNextFloors();
         return true;
     }
 

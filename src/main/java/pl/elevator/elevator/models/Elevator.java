@@ -17,7 +17,7 @@ public class Elevator {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     protected long id;
-    protected int currentFlat;
+    protected int currentFloor;
 
 
 }

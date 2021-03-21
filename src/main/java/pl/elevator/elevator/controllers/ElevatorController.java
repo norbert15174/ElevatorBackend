@@ -26,20 +26,20 @@ public class ElevatorController {
 
     @GetMapping()
     public ResponseEntity<List<Integer>> getFlats(@RequestParam String username, @RequestParam long buildingId, @RequestParam long elevatorId) {
-        return elevatorService.getNextFlats(username, buildingId, elevatorId);
+        return elevatorService.getNextFloor(username, buildingId, elevatorId);
     }
 
-    @PostMapping("/add/{flat}")
-    public ResponseEntity<BuildingElevator> addFlats(@RequestBody BuildingDataDTO buildingDataDTO, @PathVariable("flat") int flat) {
-        return elevatorService.addNewFlat(buildingDataDTO.getUsername(),buildingDataDTO.getBuildingId(),buildingDataDTO.getElevatorId(),flat);
+    @PostMapping("/add/{floor}")
+    public ResponseEntity<BuildingElevator> addFlats(@RequestBody BuildingDataDTO buildingDataDTO, @PathVariable("floor") int floor) {
+        return elevatorService.addNewFloor(buildingDataDTO.getUsername(),buildingDataDTO.getBuildingId(),buildingDataDTO.getElevatorId(),floor);
     }
     @PostMapping("/move")
     public ResponseEntity<List<Integer>> moveElevator(@RequestBody BuildingDataDTO buildingDataDTO) {
         return elevatorService.moveElevator(buildingDataDTO.getUsername(),buildingDataDTO.getBuildingId(),buildingDataDTO.getElevatorId());
     }
-    @GetMapping("/flat")
-    public ResponseEntity<Integer> getCurrentFlat(@RequestParam String username, @RequestParam long buildingId, @RequestParam long elevatorId) {
-        return elevatorService.getCurrentFlat(username,buildingId,elevatorId);
+    @GetMapping("/floor")
+    public ResponseEntity<Integer> getCurrentFloor(@RequestParam String username, @RequestParam long buildingId, @RequestParam long elevatorId) {
+        return elevatorService.getCurrentFloor(username,buildingId,elevatorId);
     }
     @GetMapping("/user/{name}")
     public ResponseEntity<List<BuildingElevator>> getUserBuildings(@PathVariable("name") String username){
@@ -51,6 +51,12 @@ public class ElevatorController {
         return elevatorService.getBuildingElevatorsInformation(username,id);
 
     }
+
+    @GetMapping("/test")
+    public String test(){
+        return "test";
+    }
+
 
     @GetMapping("/buildings")
     public ResponseEntity<Map<String, List<BuildingElevator>>> getAllBuildingElevator(){

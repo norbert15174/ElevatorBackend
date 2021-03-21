@@ -11,6 +11,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import pl.elevator.elevator.interfaces.UserInterface;
 import pl.elevator.elevator.models.User;
 import pl.elevator.elevator.repositories.UserRepository;
 
@@ -18,7 +19,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Service
-public class UserService implements UserDetailsService {
+public class UserService implements UserDetailsService, UserInterface {
 
     @Value("${Algorithm-key}")
     private String key;
@@ -30,13 +31,13 @@ public class UserService implements UserDetailsService {
         this.passwordEncoder = passwordEncoder;
     }
 
-
+    @Override
     public UserDetails accountVerify(String username, String password) {
         UserDetails userDetails = loadUserByUsername(username);
         if (passwordEncoder.matches(password, userDetails.getPassword()) && userDetails.isEnabled()) return userDetails;
         return null;
     }
-
+    @Override
     public ResponseEntity UserRegister(String username, String password) {
         if (userRepository.findFirstByUsername(username).isPresent()) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         User userApp = new User();
@@ -45,7 +46,7 @@ public class UserService implements UserDetailsService {
         if (userRepository.save(userApp) == null) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         return new ResponseEntity<>(HttpStatus.OK);
     }
-
+    @Override
     public ResponseEntity<Map<String, String>> login(String username, String password) {
         try {
             UserDetails userDetails = loadUserByUsername(username);

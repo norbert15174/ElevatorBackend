@@ -1,8 +1,6 @@
 package pl.elevator.elevator.services;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.event.EventListener;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -12,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import pl.elevator.elevator.classes.BuildingElevator;
 
 import pl.elevator.elevator.classes.ElevatorInUse;
+import pl.elevator.elevator.interfaces.ElevatorInterface;
 import pl.elevator.elevator.models.Building;
 import pl.elevator.elevator.models.Elevator;
 import pl.elevator.elevator.models.User;
@@ -24,7 +23,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
-public class ElevatorService {
+public class ElevatorService implements ElevatorInterface {
 
 
     private Map<String, List<BuildingElevator>> buildingElevator = new HashMap<>();
@@ -62,38 +61,43 @@ public class ElevatorService {
 
     }
 
-
-    public ResponseEntity addNewFlat(String username, long buildingId, long elevatorId, int flat){
+    @Override
+    public ResponseEntity addNewFloor(String username, long buildingId, long elevatorId, int floor){
         int id = getBuildingId(username,buildingId);
         if(id == -1 || buildingElevator.get(username).get(id).getElevatorInUseList().isEmpty()) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         buildingElevator.get(username).get(id).setLastUsed(LocalDateTime.now());
-        buildingElevator.get(username).get(id).getElevatorInUseList().get(elevatorId).addNextFlat(flat);
+        buildingElevator.get(username).get(id).getElevatorInUseList().get(elevatorId).addNextFloor(floor);
         return new ResponseEntity<>(HttpStatus.OK);
     }
-    public ResponseEntity<List<Integer>> getNextFlats(String username, long buildingId, long elevatorId){
+    @Override
+    public ResponseEntity<List<Integer>> getNextFloor(String username, long buildingId, long elevatorId){
         int id = getBuildingId(username,buildingId);
         if(id == -1 || buildingElevator.get(username).get(id).getElevatorInUseList().isEmpty()) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         buildingElevator.get(username).get(id).setLastUsed(LocalDateTime.now());
-        List<Integer> flats = buildingElevator.get(username).get(id).getElevatorInUseList().get(elevatorId).getNextFlats();
-        return new ResponseEntity<>(flats,HttpStatus.OK);
+        List<Integer> floors = buildingElevator.get(username).get(id).getElevatorInUseList().get(elevatorId).getNextFloors();
+        return new ResponseEntity<>(floors,HttpStatus.OK);
     }
+    @Override
     public ResponseEntity<List<Integer>> moveElevator(String username, long buildingId, long elevatorId){
         int id = getBuildingId(username,buildingId);
         if(id == -1 || buildingElevator.get(username).get(id).getElevatorInUseList().isEmpty()) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         buildingElevator.get(username).get(id).setLastUsed(LocalDateTime.now());
-        buildingElevator.get(username).get(id).getElevatorInUseList().get(elevatorId).moveToNextFlat();
+        buildingElevator.get(username).get(id).getElevatorInUseList().get(elevatorId).moveToNextFloor();
         return new ResponseEntity<>(HttpStatus.OK);
     }
-    public ResponseEntity<Integer> getCurrentFlat(String username, long buildingId, long elevatorId){
+    @Override
+    public ResponseEntity<Integer> getCurrentFloor(String username, long buildingId, long elevatorId){
         int id = getBuildingId(username,buildingId);
         if(id == -1 || buildingElevator.get(username).get(id).getElevatorInUseList().isEmpty()) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         buildingElevator.get(username).get(id).setLastUsed(LocalDateTime.now());
-        int flat = buildingElevator.get(username).get(id).getElevatorInUseList().get(elevatorId).getCurrentFlat();
-        return new ResponseEntity<>(flat,HttpStatus.OK);
+        int floor = buildingElevator.get(username).get(id).getElevatorInUseList().get(elevatorId).getCurrentFloor();
+        return new ResponseEntity<>(floor,HttpStatus.OK);
     }
+    @Override
     public ResponseEntity<List<BuildingElevator>> getUserBuildings(String username){
         return new ResponseEntity<>(buildingElevator.get(username),HttpStatus.OK);
     }
+    @Override
     public ResponseEntity<BuildingElevator> getBuildingElevatorsInformation(String username, long buildingId){
         int id = getBuildingId(username,buildingId);
         if(id == -1) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -101,12 +105,12 @@ public class ElevatorService {
         BuildingElevator building = buildingElevator.get(username).get(id);
         return new ResponseEntity<>(building,HttpStatus.OK);
     }
-
+    @Override
     public ResponseEntity<Map<String, List<BuildingElevator>>> getAllBuildingElevator(){
         return new ResponseEntity(buildingElevator, HttpStatus.OK);
     }
 
-
+    @Override
     @Transactional
     public ResponseEntity<Building> addNewBuilding(Building building, Principal principal){
         UserDetails userDetails = userService.loadUserByUsername(principal.getName());
@@ -118,10 +122,12 @@ public class ElevatorService {
             if(getUser.addBuilding(building)){
                 userRepository.save(getUser);
                 try {
+                    if(buildingElevator.get(userDetails.getUsername()).stream().filter(build -> build.getBuildingName() == building.getBuildingName()).findFirst().isPresent()) return new ResponseEntity<>(HttpStatus.CONFLICT);
                     buildingElevator.get(userDetails.getUsername()).add(new BuildingElevator(buildingRepository.findBuildingByName(building.getBuildingName()).get()));
                     return new ResponseEntity<>(building,HttpStatus.OK);
                 }catch (NullPointerException e){
                     buildingElevator.put(userDetails.getUsername(),new ArrayList<>());
+                    if(buildingElevator.get(userDetails.getUsername()).stream().filter(build -> build.getBuildingName() == building.getBuildingName()).findFirst().isPresent()) return new ResponseEntity<>(HttpStatus.OK);
                     buildingElevator.get(userDetails.getUsername()).add(new BuildingElevator(buildingRepository.findBuildingByName(building.getBuildingName()).get()));
                     return new ResponseEntity<>(HttpStatus.OK);
                 }
@@ -131,6 +137,7 @@ public class ElevatorService {
         }
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
+    @Override
     @Transactional
     public ResponseEntity deleteBuilding(long id, Principal principal){
         UserDetails userDetails = userService.loadUserByUsername(principal.getName());
@@ -149,6 +156,7 @@ public class ElevatorService {
         }
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
+    @Override
     @Transactional
     public ResponseEntity deleteElevator(String username, long buildingId, long elevatorId, Principal principal){
         UserDetails userDetails = userService.loadUserByUsername(principal.getName());
@@ -159,11 +167,11 @@ public class ElevatorService {
         elevatorRepository.deleteById(elevatorId);
         return new ResponseEntity(HttpStatus.OK);
     }
-
+    @Override
     @Transactional
     public ResponseEntity addElevator(String username, long buildingId, Principal principal){
         Elevator elevator = new Elevator();
-        elevator.setCurrentFlat(0);
+        elevator.setCurrentFloor(0);
         UserDetails userDetails = userService.loadUserByUsername(principal.getName());
         Optional<Building> building = buildingRepository.findBuildingById(buildingId);
         if(!building.isPresent()) return new ResponseEntity(HttpStatus.NOT_FOUND);
@@ -177,8 +185,8 @@ public class ElevatorService {
         return new ResponseEntity(HttpStatus.OK);
     }
 
-    public void moveFlatAll(){
-        buildingElevator.forEach((k,v) -> v.forEach(b -> b.getElevatorInUseList().forEach((ke,el) -> el.moveToNextFlat())));
+    public void moveAllFloor(){
+        buildingElevator.forEach((k,v) -> v.forEach(b -> b.getElevatorInUseList().forEach((ke,el) -> el.moveToNextFloor())));
     }
 
 
