@@ -42,9 +42,10 @@ public class ElevatorService implements ElevatorInterface {
                 List<User> user = userRepository.getAllUserBuildings().get();
                 for(User u : user){
                     List<BuildingElevator> userBuildingsToSave = new ArrayList<>();
-                    u.getBuildings().forEach(building -> userBuildingsToSave.add(new BuildingElevator(building)));
+                    u.getBuildings().forEach(building -> userBuildingsToSave.add(new BuildingElevator(buildingRepository.findBuildingById(building.getId()).get())));
                     this.buildingElevator.put(u.getUsername(),userBuildingsToSave);
                 };
+
             }catch (NullPointerException e){
                 System.err.println("Data in DB doesn't exist");
             }
@@ -122,12 +123,10 @@ public class ElevatorService implements ElevatorInterface {
             if(getUser.addBuilding(building)){
                 userRepository.save(getUser);
                 try {
-                    if(buildingElevator.get(userDetails.getUsername()).stream().filter(build -> build.getBuildingName() == building.getBuildingName()).findFirst().isPresent()) return new ResponseEntity<>(HttpStatus.CONFLICT);
                     buildingElevator.get(userDetails.getUsername()).add(new BuildingElevator(buildingRepository.findBuildingByName(building.getBuildingName()).get()));
                     return new ResponseEntity<>(building,HttpStatus.OK);
                 }catch (NullPointerException e){
                     buildingElevator.put(userDetails.getUsername(),new ArrayList<>());
-                    if(buildingElevator.get(userDetails.getUsername()).stream().filter(build -> build.getBuildingName() == building.getBuildingName()).findFirst().isPresent()) return new ResponseEntity<>(HttpStatus.OK);
                     buildingElevator.get(userDetails.getUsername()).add(new BuildingElevator(buildingRepository.findBuildingByName(building.getBuildingName()).get()));
                     return new ResponseEntity<>(HttpStatus.OK);
                 }

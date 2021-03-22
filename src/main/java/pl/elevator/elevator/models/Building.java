@@ -21,7 +21,7 @@ public class Building {
     private int floorsNumber;
     @NotNull
     private String buildingName;
-    @OneToMany(fetch = FetchType.EAGER,cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.LAZY,cascade = CascadeType.ALL)
     private List<Elevator> elevators = new ArrayList<>();
     private LocalDateTime lastUsed;
 
